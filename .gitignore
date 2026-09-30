@@ -1,0 +1,12 @@
+.build/
+.swiftpm/
+dist/
+.DS_Store
+*.xcuserstate
+*.dSYM/
+*.zip
+node_modules/
+.wrangler/
+.env
+.env.*
+.dev.vars*

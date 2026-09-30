@@ -1,0 +1,13 @@
+{
+  "name": "nextreset-website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check:deploy": "wrangler deploy --dry-run"
+  },
+  "devDependencies": {
+    "wrangler": "4.144.0"
+  }
+}

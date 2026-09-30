@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nextreset",
+  "account_id": "2dcdab10970a772f504ac050e8469966",
+  "compatibility_date": "2026-09-30",
+  "assets": { "directory": "./website" },
+  "routes": [{ "pattern": "nextreset.tokenpark.org", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false
+}
