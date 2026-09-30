@@ -14,7 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         status=NSStatusBar.system.statusItem(withLength:NSStatusItem.variableLength)
         if let button=status.button { button.target=self;button.action=#selector(toggle);button.font=NSFont.monospacedDigitSystemFont(ofSize:12,weight:.medium) }
         popover.behavior = .transient
-        popover.contentViewController=NSHostingController(rootView:Dashboard(store:store,height:min(600,(NSScreen.main?.visibleFrame.height ?? 800)-90)))
+        popover.contentViewController=NSHostingController(rootView:Dashboard(store:store,height:min(680,(NSScreen.main?.visibleFrame.height ?? 800)-90)))
         store.onChange={ [weak self] in self?.updateStatus() }
         appearanceObservation=status.button?.observe(\.effectiveAppearance,options:[.new]) { [weak self] _,_ in
             self?.updateStatus()
@@ -79,11 +79,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         if popover.isShown { popover.performClose(nil) }
         else {
             let available=status.button?.window?.screen?.visibleFrame.height ?? NSScreen.main?.visibleFrame.height ?? 800
-            popover.contentViewController=NSHostingController(rootView:Dashboard(store:store,height:max(300,min(600,available-90))))
+            popover.contentViewController=NSHostingController(rootView:Dashboard(store:store,height:max(300,min(680,available-90))))
             store.refreshIfNeeded();NSApp.activate(ignoringOtherApps:true);popover.show(relativeTo:button.bounds,of:button,preferredEdge:.minY) }
     }
     func userNotificationCenter(_ center:UNUserNotificationCenter,willPresent notification:UNNotification,withCompletionHandler completionHandler:@escaping(UNNotificationPresentationOptions)->Void) { completionHandler([.banner,.sound]) }
 }
+
+#if DEBUG
+if let index=CommandLine.arguments.firstIndex(of:"--render-preview"), CommandLine.arguments.count>index+1 {
+    do { try MainActor.assumeIsolated { try renderDashboardPreviews(to:CommandLine.arguments[index+1]) };exit(0) }
+    catch { fputs("\(error)\n",stderr);exit(1) }
+}
+#endif
 
 if CommandLine.arguments.contains("--probe") {
     do { let result=try RPCReader.fetch();print("Live read OK: remaining \(100-(result.window?.usedPercent ?? 100))%, tickets \(result.rateLimitResetCredits?.availableCount ?? 0)") }

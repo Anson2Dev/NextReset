@@ -110,7 +110,8 @@ final class QuotaStore: ObservableObject {
         try? FileManager.default.createDirectory(at:root,withIntermediateDirectories:true)
         return root.appendingPathComponent("snapshot.json")
     }()
-    init() {
+    init(preview: Bool = false) {
+        if preview { return }
         if let data = try? Data(contentsOf:cacheURL), let c = try? JSONDecoder().decode(Cache.self,from:data) {
             snapshot=c.snapshot; updated=c.updated; samples=c.samples
         }
@@ -138,6 +139,16 @@ final class QuotaStore: ObservableObject {
     func select(_ tickets:Int) { planCoupons=tickets;autoBest=false;settingsChanged() }
     func useBest() { autoBest=true;settingsChanged() }
     var daily: Double? { guard !stale, error == nil, !expiredUnrefreshed, let remaining, let days else { return nil }; return Plan.daily(left:remaining,buffer:buffer,coupons:usablePlan,days:days) }
+    func budget(coupons: Int) -> Double? {
+        guard !stale, error == nil, !expiredUnrefreshed,
+              coupons >= 0, coupons <= (count ?? 0),
+              let remaining, let days, days > 0 else { return nil }
+        return Plan.daily(left: remaining, buffer: buffer, coupons: coupons, days: 1)
+    }
+    var forecast: QuotaForecast? {
+        guard let total = budget(coupons: usablePlan), let days else { return nil }
+        return QuotaForecast(total: total, days: days, pace: observed)
+    }
     var observed: Double? { guard !stale,error == nil else { return nil }; return Plan.observed(samples,now:now) }
     var expiredUnrefreshed: Bool { credits.contains { ($0.expiry ?? .distantFuture) <= now } }
     var needsCoupon: Bool { !stale && error == nil && usablePlan>0 && (remaining ?? 100)<=buffer }
@@ -152,6 +163,7 @@ final class QuotaStore: ObservableObject {
         if stale { return "Refresh needed" }
         if needsCoupon { return "Time to use a ticket" }
         if urgent { return "A ticket expires soon" }
+        if let d=daily, d == 0 { return "No spendable quota in this plan" }
         if let d=daily,let o=observed,d>0 {
             if o < d*0.9 { return "Room to use more" }
             if o > d*1.1 { return "Consider slowing down" }

@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import TokenParkCore
 
-private enum Palette {
+enum Palette {
     static let green=Color(nsColor:NSColor(name:nil) { $0.bestMatch(from:[.darkAqua,.aqua]) == .darkAqua ? NSColor(red:0.64,green:0.82,blue:0.69,alpha:1) : NSColor(red:0.14,green:0.33,blue:0.23,alpha:1) })
     static let surface=Color(nsColor:NSColor(name:nil) { $0.bestMatch(from:[.darkAqua,.aqua]) == .darkAqua ? NSColor(red:0.11,green:0.15,blue:0.12,alpha:1) : NSColor(red:0.985,green:0.981,blue:0.965,alpha:1) })
     static let sage=Color(nsColor:NSColor(name:nil) { $0.bestMatch(from:[.darkAqua,.aqua]) == .darkAqua ? NSColor(red:0.17,green:0.23,blue:0.18,alpha:1) : NSColor(red:0.92,green:0.94,blue:0.90,alpha:1) })
@@ -13,13 +13,6 @@ struct Dashboard: View {
     let height:CGFloat
     @State private var page="main"
     @State private var advancedExpanded=false
-    private var windowName:String {
-        switch store.snapshot?.window?.windowDurationMins {
-        case 10080: return "Weekly"
-        case 300: return "5-hour"
-        default: return "Quota"
-        }
-    }
     private var pageTitle:String {
         switch page {
         case "settings": return "Settings"
@@ -39,15 +32,15 @@ struct Dashboard: View {
                 if store.refreshing { ProgressView().controlSize(.mini) }
                 Button { store.refresh() } label: { Image(systemName:"arrow.clockwise").font(.system(size:15)).frame(width:28,height:28) }.help("Refresh now").accessibilityLabel("Refresh now").disabled(store.refreshing)
                 if page == "main" { Button { page="settings" } label: { Image(systemName:"slider.horizontal.3").font(.system(size:15)).frame(width:28,height:28) }.help("Settings").accessibilityLabel("Settings") }
-            }.buttonStyle(.plain).padding(.horizontal,20).padding(.top,22).padding(.bottom,14)
-            if page == "main" { resetCountdown.padding(.horizontal,20).padding(.bottom,14) }
+            }.buttonStyle(.plain).padding(.horizontal,20).padding(.top,16).padding(.bottom,10)
+            Divider().padding(.horizontal,20)
             ScrollView {
                 Group {
                     if page == "main" { mainPanel }
                     else if page == "settings" { settingsPanel }
                     else if page == "plan" { planPanel }
                     else { ticketsPanel }
-                }.padding(.horizontal,20).padding(.bottom,12).frame(maxWidth:.infinity,alignment:.leading)
+                }.padding(.horizontal,20).padding(.top,10).padding(.bottom,10).frame(maxWidth:.infinity,alignment:.leading)
             }.scrollIndicators(.hidden)
             Divider().padding(.horizontal,20)
             HStack {
@@ -55,21 +48,20 @@ struct Dashboard: View {
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }.buttonStyle(.plain).font(.system(size:11)).foregroundStyle(.secondary)
             }.padding(.horizontal,20).padding(.vertical,12)
-        }.frame(width:400,height:height).background(Palette.surface).tint(Palette.green).environment(\.locale,Locale(identifier:"en_US"))
+        }.frame(width:440,height:height).background(Palette.surface).tint(Palette.green).environment(\.locale,Locale(identifier:"en_US"))
     }
     private var resetCountdown:some View {
         TimelineView(.periodic(from:.now,by:1)) { context in
-            VStack(alignment:.leading,spacing:5) {
-                HStack(alignment:.firstTextBaseline) {
-                    Label("Next Reset",systemImage:"clock").font(.system(size:13,weight:.medium))
-                    Spacer()
-                    Text(resetText(at:context.date))
-                        .font(.system(size:17,weight:.semibold,design:.rounded)).monospacedDigit()
-                        .foregroundStyle(Palette.green)
-                }
-                Text(store.reset.map { windowName+" · "+Self.shortDate($0)+" · "+Self.zone } ?? "Waiting for reset time")
-                    .font(.system(size:11)).foregroundStyle(.secondary)
-            }.accessibilityElement(children:.combine)
+            VStack(alignment:.leading,spacing:6) {
+                Text("Until reset").font(.system(size:11)).foregroundStyle(.secondary)
+                Text(resetText(at:context.date))
+                    .font(.system(size:23,weight:.semibold,design:.rounded)).monospacedDigit()
+                    .lineLimit(1).minimumScaleFactor(0.65)
+                Text(store.reset.map { Self.shortDate($0)+" · "+Self.zone } ?? "Waiting for reset time")
+                    .font(.system(size:10)).foregroundStyle(.secondary)
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }.frame(maxWidth:.infinity,alignment:.leading)
+                .accessibilityElement(children:.combine)
         }
     }
     private func resetText(at date:Date)->String {
@@ -81,15 +73,10 @@ struct Dashboard: View {
         return days>0 ? "\(days)d \(clock)" : clock
     }
     private var mainPanel:some View {
-        VStack(alignment:.leading,spacing:13) {
-            HStack(alignment:.firstTextBaseline,spacing:7) {
-                Text(store.remaining.map { String(format:"%.0f%%",$0) } ?? "—").font(.system(size:36,weight:.semibold,design:.rounded)).monospacedDigit()
-                Text(windowName.lowercased()+" remaining").font(.subheadline).foregroundStyle(.secondary)
-                Spacer()
-            }
-            bar(fraction:(store.remaining ?? 0)/100,height:6).accessibilityLabel(windowName+" quota remaining")
-                .accessibilityValue(store.remaining.map { String(format:"%.0f percent",$0) } ?? "Unknown")
+        VStack(alignment:.leading,spacing:10) {
             budgetCard
+            QuotaForecastChart(forecast:store.forecast, reset:store.reset,
+                               unavailable:store.stale || store.error != nil || store.expiredUnrefreshed)
             HStack(alignment:.center,spacing:10) {
                 Image(systemName:reminderIcon).font(.system(size:19,weight:.medium)).frame(width:34,height:34).background(Palette.sage,in:Circle()).foregroundStyle(Palette.green)
                 VStack(alignment:.leading,spacing:3) {
@@ -118,48 +105,73 @@ struct Dashboard: View {
     private var budgetCard:some View {
         VStack(alignment:.leading,spacing:10) {
             HStack {
-                Text("Daily Budget").font(.system(size:13,weight:.semibold))
+                Text("Budget until reset").font(.system(size:13,weight:.semibold)).foregroundStyle(.secondary)
                 Spacer()
-                Text(store.autoBest ? (store.recommendation.provisional ? "Auto · Estimate" : "Auto") : "Manual")
-                    .font(.system(size:11)).foregroundStyle(.secondary)
                 Button { page="plan" } label: {
-                    Image(systemName:"info.circle").frame(width:28,height:28)
+                    Image(systemName:"info.circle").frame(width:24,height:24)
                 }.buttonStyle(.plain).accessibilityLabel("Plan details").help("How this budget is calculated")
             }
-            HStack(spacing:2) {
-                ForEach(0...3,id:\.self) { n in
-                    let selected=store.usablePlan==n
-                    let best=store.recommendation.tickets==n
-                    Button { store.select(n) } label: {
-                        VStack(spacing:1) {
-                            Text(n==0 ? "No ticket" : n==1 ? "1 ticket" : "\(n) tickets").font(.system(size:11,weight:selected ? .semibold : .regular))
-                            Text(best ? "Best" : " ").font(.system(size:11,weight:.medium))
-                        }.frame(maxWidth:.infinity).frame(height:35)
-                            .foregroundStyle(selected ? Color(nsColor:.selectedMenuItemTextColor) : Color.primary)
-                            .background(selected ? Color(red:0.14,green:0.33,blue:0.23) : Color.clear,in:RoundedRectangle(cornerRadius:7))
-                    }.buttonStyle(.plain).disabled(n>(store.count ?? 0)).opacity(n>(store.count ?? 0) ? 0.35 : 1)
-                    .accessibilityLabel("\(n==0 ? "No ticket" : n==1 ? "1 ticket" : "\(n) tickets")\(best ? ", Best recommendation" : "")")
-                    .accessibilityAddTraits(selected ? .isSelected : [])
+            HStack(spacing:18) {
+                VStack(alignment:.leading,spacing:3) {
+                    Text(store.budget(coupons:store.usablePlan).map { String(format:"%.0f%%",$0) } ?? "—")
+                        .font(.system(size:42,weight:.semibold,design:.rounded)).monospacedDigit()
+                        .foregroundStyle(Palette.green).lineLimit(1).minimumScaleFactor(0.7)
+                    Text("Available to use").font(.system(size:12)).foregroundStyle(.secondary)
+                }.frame(width:145,alignment:.leading)
+                Rectangle().fill(.primary.opacity(0.12)).frame(width:1,height:64)
+                resetCountdown
+            }.padding(.bottom,3)
+            VStack(alignment:.leading,spacing:8) {
+                HStack {
+                    Text("Tickets to use").font(.system(size:12,weight:.semibold))
+                    Spacer()
+                    Menu {
+                        Button("Auto-select Best") { store.useBest() }
+                        if store.autoBest {
+                            Button("Keep this plan manually") { store.select(store.usablePlan) }
+                        }
+                    } label: {
+                        Text(store.autoBest ? (store.recommendation.provisional ? "Auto · Estimate" : "Auto") : "Manual")
+                            .font(.system(size:11)).foregroundStyle(.secondary)
+                    }.menuStyle(.borderlessButton).fixedSize()
                 }
-            }.padding(2).background(.primary.opacity(0.04),in:RoundedRectangle(cornerRadius:9))
-            HStack(alignment:.firstTextBaseline,spacing:6) {
-                Text(store.daily.map { String(format:"%.1f%%",$0) } ?? "—").font(.system(size:34,weight:.semibold,design:.rounded)).monospacedDigit()
-                Text("/ day").font(.system(size:12)).foregroundStyle(.secondary)
-                Spacer(minLength:0)
-                if !store.autoBest {
-                    Button("Use Best") { store.useBest() }.font(.system(size:11))
-                        .disabled(store.recommendation.tickets == nil)
-                        .help("Restore automatic plan selection")
+                HStack(spacing:0) {
+                    ForEach(0...3,id:\.self) { n in
+                        let selected=store.usablePlan==n
+                        let available=n <= (store.count ?? 0)
+                        Button { store.select(n) } label: {
+                            VStack(spacing:4) {
+                                Text(n==1 ? "1 ticket" : "\(n) tickets")
+                                Text(store.budget(coupons:n).map { String(format:"%.0f%%",$0) } ?? "—")
+                                    .monospacedDigit()
+                            }.font(.system(size:12,weight:selected ? .semibold : .regular))
+                                .frame(maxWidth:.infinity).frame(height:48)
+                                .foregroundStyle(selected ? Color.white : Color.primary)
+                                .background(selected ? Color(red:0.14,green:0.33,blue:0.23) : Color.clear)
+                                .contentShape(Rectangle())
+                        }.buttonStyle(.plain).disabled(!available).opacity(available ? 1 : 0.35)
+                            .accessibilityLabel("\(n) tickets, " + (store.budget(coupons:n).map { String(format:"%.0f percent available",$0) } ?? "unavailable"))
+                            .accessibilityAddTraits(selected ? .isSelected : [])
+                    }
+                }.background(.primary.opacity(0.025))
+                    .clipShape(RoundedRectangle(cornerRadius:8))
+                    .overlay(RoundedRectangle(cornerRadius:8).stroke(.primary.opacity(0.12),lineWidth:1))
+                HStack {
+                    Text(store.recommendation.tickets.map { "\(store.recommendation.provisional ? "Estimated" : "Recommended"): \($0) \($0 == 1 ? "ticket" : "tickets")" } ?? "Recommendation unavailable")
+                        .font(.system(size:11)).foregroundStyle(.secondary)
+                    Spacer()
+                    if !store.autoBest {
+                        Button("Use Best") { store.useBest() }.buttonStyle(.plain).font(.system(size:11)).foregroundStyle(Palette.green)
+                            .disabled(store.recommendation.tickets == nil)
+                    }
                 }
-            }.help("Percent of one full quota per day, not of your remaining balance. A ticket plan can exceed 100% per day.")
-            Divider()
-            HStack { Text("Current pace");Spacer();Text(store.observed.map { String(format:"%.1f%% / day",$0) } ?? "Sampling…").monospacedDigit() }.font(.system(size:12))
-
-        }.padding(13).background(Palette.sage,in:RoundedRectangle(cornerRadius:12))
+            }
+        }
     }
     private var reminderIcon:String {
         if store.error != nil || store.stale { return "exclamationmark" }
         if store.needsCoupon || store.urgent { return "ticket" }
+        if store.daily == 0 { return "minus.circle" }
         if let r=ratio { return r<0.9 ? "arrow.up.right" : r>1.1 ? "arrow.down.right" : "checkmark" }
         return "clock"
     }
@@ -167,15 +179,14 @@ struct Dashboard: View {
         if store.error != nil || store.stale { return "Cached figures are not a live reading." }
         if store.needsCoupon { return "Redeem in Codex, then refresh this panel." }
         if store.urgent { return store.firstExpiry.map { "Expires "+Self.shortDate($0)+" · "+Self.zone } ?? "Check ticket details." }
-        if let daily=store.daily,let observed=store.observed,observed>0 { return String(format:"Aim for %.2f× your current pace.",daily/observed) }
-        if store.observed == 0 { return "No consumption recorded in the sampled periods." }
+        if let daily=store.daily,let observed=store.observed { return String(format:"%.1f%% / day now · %.1f%% / day ideal",observed,daily) }
         return "Pace appears after 30 minutes of valid samples."
     }
     private var planPanel:some View {
         VStack(alignment:.leading,spacing:18) {
             VStack(alignment:.leading,spacing:6) {
-                Text("Daily Budget").font(.headline)
-                Text("Percent of a full quota available to use each day until Next Reset, including the tickets selected in your plan. This is a planning estimate.")
+                Text("Budget until reset").font(.headline)
+                Text("Total spendable quota until Next Reset, including the selected tickets and excluding the planning buffer. 100% is one full quota. The forecast treats planned refills as one spendable pool; it is not your live account balance. Ideal pace spreads that pool evenly until reset.")
             }
             VStack(alignment:.leading,spacing:6) {
                 Text("Why Best?").font(.headline)
@@ -284,14 +295,6 @@ struct Dashboard: View {
             if store.credits.isEmpty { Text(store.count == 0 ? "No reset tickets available." : "The service did not return ticket details.").font(.subheadline) }
             Text("Times are converted from the service's absolute expiry timestamps to your system time zone. Redeem before the deadline, not at midnight.").font(.caption).foregroundStyle(.secondary)
         }
-    }
-    private func bar(fraction:Double,height:CGFloat)->some View {
-        GeometryReader { geo in
-            ZStack(alignment:.leading) {
-                Capsule().fill(.primary.opacity(0.09))
-                Capsule().fill(Palette.green.opacity(0.8)).frame(width:geo.size.width*max(0,min(1,fraction)))
-            }
-        }.frame(height:height).accessibilityLabel("\(Int(fraction*100)) percent")
     }
     static func shortDate(_ date:Date)->String { let f=DateFormatter();f.locale=Locale(identifier:"en_US_POSIX");f.dateFormat="MMM d, HH:mm";return f.string(from:date) }
     static func time(_ date:Date)->String { let f=DateFormatter();f.locale=Locale(identifier:"en_US_POSIX");f.dateFormat="HH:mm";return f.string(from:date) }

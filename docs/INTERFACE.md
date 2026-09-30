@@ -1,19 +1,21 @@
 # Interface terminology and hierarchy
 
-NextReset@TokenPark's main panel answers four questions in order:
+NextReset@TokenPark's main panel combines budget and forecast in one surface:
 
-1. **Next Reset** — a live countdown for the planning window; the date line names the window and time zone.
-2. **Weekly remaining** — the remaining percentage of the weekly quota, when the service identifies a weekly window. Other windows use their own label.
-3. **Daily Budget** — the recommended use per day for the selected ticket plan. **Current pace** uses the same `% / day` unit and represents sampled use, not today's accumulated consumption.
+1. **Budget until reset** — total spendable quota in the selected plan, beside a live days/hours/minutes/seconds countdown. The exact reset date and time zone sit below the countdown.
+2. **Tickets to use** — 0 / 1 / 2 / 3 ticket choices each show their total spendable quota. Unavailable counts are disabled. Auto or Manual names the selection mode; Use Best restores automatic selection. Provisional recommendations are marked Estimate.
+3. **Remaining quota** — the selected pool is forecast from Now to Reset. A green line shows sampled current pace, a gray dashed line shows ideal pace, and a checkered flag marks the fixed reset deadline. A running-person symbol follows the observed line's endpoint, without a “You” label. Consumption stops at zero when the pool would run out early. Missing pace shows only the ideal line; stale/error states hide the forecast.
 4. **Reset Tickets** — available count, **Next expiry**, and the buffer reminder. Expiry does not mean quota reset.
 
-The four plan choices stay No ticket / 1 ticket / 2 tickets / 3 tickets. Best marks the recommendation; Auto or Manual names the selection mode. Manual selection exposes Use Best to restore automatic selection. Auto · Estimate identifies provisional recommendations.
+Each forecast is a planning pool including future manual ticket redemptions, not a simulation of the live balance jumping at redemption. Budget calculations retain the existing buffer rule: with 37% remaining and a 3% buffer, the totals are 34%, 134%, 231%, and 328%. The zero-ticket plan retains its buffer too.
+
+The chart uses one Canvas coordinate system with fixed plot insets. Flag, runner, endpoints, axes, and labels cannot resize the plot. Endpoint annotations and runner positions avoid both curves and each other. The popover is 440 points wide, up to 680 points tall; shorter screens scroll the content while retaining header/footer. Light and dark appearances use semantic foreground colors.
 
 Plan Details contains recommendation reasoning, measurement definitions, manual-selection behavior, and the assumption that ticket redemption leaves the planning reset unchanged. This assumption still requires confirmation; the interface does not make the strategy a guarantee.
 
 Settings contains Menu bar display, Auto-select Best, Ticket reminders, and About (version, MIT license, author, website, email, and GitHub). Advanced contains the buffer, daily capacity, and Locate Codex fallback.
 
-Percentages always denote quota; `% / day` denotes usage pace. The dashboard does not use a percentage progress bar for pace attainment. The contextual suggestion may express a multiplier of the current pace.
+Percentages always denote quota; `% / day` denotes usage pace. The dashboard does not use a percentage progress bar for pace attainment. The contextual suggestion compares current and ideal pace in % / day.
 
 Keep all interface text in English. Preserve the ivory/sage palette, system fonts, SF Symbols, compact popover, and separate detail pages.
 
@@ -56,3 +58,13 @@ iconutil -c icns assets/AppIcon.iconset -o assets/AppIcon.icns
 ## Website installation entry
 
 The Homebrew command is centered across the top of the hero. A native Copy button writes the exact single-line command, shows Copied briefly, and announces success. If clipboard access fails, the script selects the command and explains manual copying. The button stays hidden when JavaScript is unavailable. On narrow screens the command wraps visually and the button moves below it; copied text retains a single line.
+
+## Visual verification
+
+Debug builds can render synthetic previews without reading the quota cache or persisting settings:
+
+```sh
+swift run TokenPark --render-preview dist/ui-preview
+```
+
+Fixtures cover normal, fast, balanced, nearly balanced, zero, missing and large usage, zero quota, short reset windows, dark appearance, stale data, and a short screen. Production builds exclude this rendering command.
