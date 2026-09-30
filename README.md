@@ -126,7 +126,7 @@ Settings shows Auto-select Best and Expiry reminders. Advanced contains the buff
 
 ## Website deployment
 
-The official site is served by Cloudflare Workers Static Assets at **https://nextreset.tokenpark.org**. No website build step or browser JavaScript is required.
+The official site is served by Cloudflare Workers at **https://nextreset.tokenpark.org**. The HTML and CSS are static, with no browser JavaScript. A small Worker serves bundled text assets with caching, security headers, and a 404 page. Wrangler bundles the files during deployment.
 
 ```sh
 npm ci
@@ -135,6 +135,6 @@ npm run check:deploy
 npm run deploy
 ```
 
-Deployment requires access to the Cloudflare account that owns `tokenpark.org`. The custom domain is declared in `wrangler.jsonc`; Wrangler manages its DNS and TLS setup. See [Cloudflare Static Assets](https://developers.cloudflare.com/workers/static-assets/get-started/).
+Deployment requires access to the Cloudflare account that owns `tokenpark.org`. The custom domain is declared in `wrangler.jsonc`; Wrangler manages its DNS and TLS setup. See [Cloudflare Workers](https://developers.cloudflare.com/workers/).
 
 The Swift package and local storage retain the internal `TokenPark` identifier for compatibility. All user-facing release branding is NextReset@TokenPark.

@@ -3,8 +3,33 @@
   "name": "nextreset",
   "account_id": "2dcdab10970a772f504ac050e8469966",
   "compatibility_date": "2026-09-30",
-  "assets": { "directory": "./website" },
-  "routes": [{ "pattern": "nextreset.tokenpark.org", "custom_domain": true }],
+  "routes": [
+    {
+      "pattern": "nextreset.tokenpark.org",
+      "custom_domain": true
+    }
+  ],
   "workers_dev": false,
-  "preview_urls": false
+  "preview_urls": false,
+  "main": "worker/index.js",
+  "rules": [
+    {
+      "type": "Text",
+      "globs": [
+        "**/*.html",
+        "**/*.css",
+        "**/*.txt",
+        "**/*.xml"
+      ],
+      "fallthrough": true
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1,
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.1
+    }
+  }
 }
