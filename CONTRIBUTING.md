@@ -6,4 +6,6 @@ Keep quota math and recommendation logic in TokenParkCore, separate from UI and 
 
 Use English UI copy. Keep the default popover compact; use a separate page for details or settings. Check light/dark appearance, keyboard access, a short display, stale-data states, and account changes.
 
-Do not attach authentication files, raw account responses, local caches, account IDs, or ticket IDs to issues. Use synthetic test fixtures. The v0.1 binary is explicitly labeled ad-hoc signed and not notarized. Future notarized releases need maintainer-controlled signing; do not commit signing material.
+Do not attach authentication files, raw account responses, local caches, account IDs, or ticket IDs to issues. Use synthetic test fixtures. Public v0.2 binaries are Developer ID signed and notarized. Release signing is maintainer-controlled; do not commit signing material. Local builds remain ad-hoc signed by default. See [RELEASING.md](docs/RELEASING.md).
+
+For website changes, use `npm ci` and `npm run check:deploy`, then check desktop and mobile layouts and any changed interaction. See [DEPLOYMENT.md](docs/DEPLOYMENT.md). Documentation-only edits need link and consistency checks rather than rebuilding the app.

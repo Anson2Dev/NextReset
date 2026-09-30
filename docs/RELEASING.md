@@ -45,3 +45,28 @@ brew upgrade --cask nextreset
 ```
 
 The Cask does not force-install or modify Codex. It also does not remove user data on uninstall.
+
+## Release checks and publication details
+
+Use the full commit SHA for `gh release create --target`; a shortened SHA was rejected by the GitHub release API during v0.2 publication. Never retag an existing release to include subsequent website changes.
+
+```sh
+gh release create vVERSION path/to/NextReset-vVERSION-macOS-arm64.zip path/to/SHA256SUMS.txt \
+  --repo Anson2Dev/NextReset --target FULL_COMMIT_SHA \
+  --title "NextReset vVERSION" --notes-file path/to/release-notes.md
+```
+
+The separate Tap working copy is a sibling checkout, `../homebrew-tap`, not part of this app repository. Copy the generated Cask there, verify it and push it independently. With the tap available locally:
+
+```sh
+HOMEBREW_DEVELOPER=1 brew style ../homebrew-tap/Casks/nextreset.rb
+HOMEBREW_DEVELOPER=1 brew audit --cask --online Anson2Dev/tap/nextreset
+```
+
+The v0.2 checks used Homebrew 7.0.3. Its Cask conventions require a trailing slash on the homepage, `depends_on macos: :sonoma`, and no deprecated `url verified:` parameter. The current generator follows these rules.
+
+For install/uninstall testing, first establish whether `nextreset` is already managed by Homebrew. Use a separate test Mac if it is. Otherwise install into a temporary `--appdir`, verify the downloaded app, and uninstall only that test installation. Never use `--force` to overwrite a user's existing app, or `--zap` during release verification.
+
+After publication, retain the final archive, checksum, Apple result and Cask in an ignored versioned archive such as `dist/releases/v0.2/`. See the [v0.2 record](releases/v0.2.md) for the successful release evidence. The public download is the recovery source for released binaries.
+
+Website deployment is separate; see [DEPLOYMENT.md](DEPLOYMENT.md).

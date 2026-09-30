@@ -28,7 +28,7 @@ This is an independent community project, not an OpenAI product. Usage is displa
 
 ## What you get
 
-- A menu bar quota ring, remaining percentage, ticket count, and pace indicator.
+- A compact menu bar quota ring with a headroom dot and optional percentage and ticket count.
 - A compact English dashboard with daily budget and sampled usage comparison.
 - Four plans: **No ticket**, **1 ticket**, **2 tickets**, **3 tickets**.
 - An automatically selected **Best** suggestion, with its reasoning in Plan Details.
@@ -67,7 +67,15 @@ Settings → Menu bar offers three display modes: **Progress** (the default, rin
 | Filled ticket | A planned ticket is ready at the buffer |
 | Circled exclamation | Read failed, cache is stale, or ticket inventory needs refreshing |
 
+The menu bar ring contains one status dot: green when observed daily use is below 90% of the selected plan's daily budget, amber from 90% through 110%, and red above 110%. A gray dot means there is not enough valid usage history. Stale data, connection errors, and unconfirmed ticket expiry show an exclamation mark instead. The tooltip and accessibility label also describe headroom in words.
+
 Color is not the only status signal.
+
+## Dashboard and settings
+
+Next Reset stays at the top of the dashboard with a seconds-level countdown and the local reset date. The countdown updates only the display; account reads remain on the 30-minute schedule. When the deadline passes, it shows Awaiting refresh rather than a negative time.
+
+Settings contains Menu bar display, Auto-select Best, Ticket reminders, and About. Advanced contains the buffer, daily capacity, and Locate Codex fallback. Codex is discovered automatically; the manual program picker is only for installations that cannot be found.
 
 ## Daily budget
 
@@ -111,7 +119,10 @@ Local snapshots and quota samples are stored in `~/Library/Application Support/T
 Sources/TokenParkCore/       Models, budget math, recommendation policy
 Sources/TokenPark/           App-server reader, state, SwiftUI panel, menu bar
 Tests/TokenParkCoreTests/    Deterministic planning and parsing tests
-scripts/build-app.sh        Local .app packaging and ad-hoc signing
+scripts/build-app.sh        Local .app packaging; optional Developer ID signing
+scripts/notarize-release.sh Verified release ZIP and Homebrew Cask generation
+scripts/generate-icon.swift App icon and logo raster generation
+assets/                    Approved SVG, PNG and ICNS artwork
 website/                    Static official website
 wrangler.jsonc              Cloudflare deployment and custom domain
 docs/examples/ci.yml        Optional macOS test/build workflow
@@ -120,16 +131,6 @@ docs/examples/ci.yml        Optional macOS test/build workflow
 The app uses no third-party packages. See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance. The optional GitHub Actions workflow is in `docs/examples/ci.yml`. To enable it, copy it to `.github/workflows/ci.yml` using credentials with the `workflow` permission. Local tests and release builds can run without GitHub Actions.
 
 Protocol reference: [OpenAI app-server documentation](https://learn.chatgpt.com/docs/app-server).
-
-## License
-
-MIT. See [LICENSE](LICENSE).
-
-### Dashboard and settings
-
-Next Reset stays at the top of the dashboard with a seconds-level countdown and the local reset date. The countdown updates only the display; account reads remain on the 30-minute schedule. When the deadline passes, it shows Awaiting refresh rather than a negative time.
-
-Settings shows Auto-select Best and Expiry reminders. Advanced contains the buffer, daily capacity, and Locate Codex fallback. Codex is discovered automatically; the manual program picker is only for installations that cannot be found.
 
 ## Website deployment
 
@@ -146,14 +147,10 @@ Deployment requires access to the Cloudflare account that owns `tokenpark.org`. 
 
 The Swift package and local storage retain the internal `TokenPark` identifier for compatibility. All user-facing release branding is NextReset@TokenPark.
 
-### Quota status colors and logo
+## Documentation
 
-The menu bar ring contains one status dot: green when observed daily use is below 90% of the selected plan's daily budget, amber from 90% through 110%, and red above 110%. A gray dot means there is not enough valid usage history. Stale data, connection errors, and unconfirmed ticket expiry show an exclamation mark instead. The tooltip and accessibility label also describe headroom in words.
+See [Documentation index](docs/README.md) for interface decisions, icon regeneration, signing and releases, website deployment, and the verified v0.2 release record.
 
-The app icon and logo use a fixed three-quarter ring with green, amber, and red dots stacked vertically. Editable artwork is in `assets/nextreset-logo.svg`; `scripts/generate-icon.swift` generates the PNG and macOS icon sizes. To regenerate the packaged icon:
+## License
 
-```sh
-swift scripts/generate-icon.swift assets
-iconutil -c icns assets/AppIcon.iconset -o assets/AppIcon.icns
-./scripts/build-app.sh
-```
+MIT. See [LICENSE](LICENSE).

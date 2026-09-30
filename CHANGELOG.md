@@ -1,5 +1,12 @@
 # Changelog
 
+## Website and documentation — 2026-09-30
+
+- Centered Homebrew installation command with a Copy button and mobile layout.
+- Updated website logo, v0.2 links and Apple notarization notice.
+- Consolidated interface, release, deployment and verified v0.2 records; removed local intermediate artifacts.
+- Website asset versions are cache keys and do not change the v0.2 app release.
+
 ## v0.2 — 2026-09-30
 
 - Compact menu bar with three persistent display modes; progress-only is the default.
