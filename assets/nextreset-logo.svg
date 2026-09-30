@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <title>NextReset</title>
+  <circle cx="512" cy="512" r="294" stroke="#dedede" stroke-width="68"/>
+  <path d="M512 218 A294 294 0 1 1 218 512" stroke="#292b2e" stroke-width="68" stroke-linecap="round"/>
+  <circle cx="512" cy="402" r="44" fill="#278454"/>
+  <circle cx="512" cy="512" r="44" fill="#d69b23"/>
+  <circle cx="512" cy="622" r="44" fill="#d8584a"/>
+</svg>

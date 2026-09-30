@@ -33,7 +33,7 @@ struct Dashboard: View {
         VStack(spacing:0) {
             HStack(spacing:9) {
                 if page != "main" { Button { page="main" } label: { Image(systemName:"chevron.left").frame(width:28,height:28) }.help("Back").accessibilityLabel("Back") }
-                Image(systemName:"circle.lefthalf.filled").foregroundStyle(Palette.green)
+                NextResetMark().frame(width:20,height:20).accessibilityHidden(true)
                 Text(pageTitle).font(.system(size:16,weight:.semibold))
                 Spacer()
                 if store.refreshing { ProgressView().controlSize(.mini) }
@@ -200,6 +200,17 @@ struct Dashboard: View {
     private var settingsPanel:some View {
         VStack(alignment:.leading,spacing:20) {
             VStack(alignment:.leading,spacing:6) {
+                Picker("Menu bar",selection:$store.menuBarDisplay) {
+                    ForEach(MenuBarDisplay.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.menu)
+                Text("The ring shows remaining quota. The center dot shows headroom: green for comfortable, amber for balanced, red for tight; gray means more usage history is needed.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Divider()
+            VStack(alignment:.leading,spacing:6) {
                 Toggle("Auto-select Best",isOn:$store.autoBest)
                     .onChange(of:store.autoBest) { _,_ in store.settingsChanged() }
                 Text("Keep the recommended ticket plan selected.")
@@ -248,6 +259,8 @@ struct Dashboard: View {
             Divider()
             VStack(alignment:.leading,spacing:10) {
                 Text("About").font(.headline)
+                Image(nsImage:AppInfo.icon)
+                    .resizable().frame(width:48,height:48).accessibilityHidden(true)
                 Text(AppInfo.name).fontWeight(.semibold)
                 Text("v\(AppInfo.version) · MIT License").foregroundStyle(.secondary)
                 Text("Author: Anson Ho")
@@ -286,5 +299,22 @@ struct Dashboard: View {
     private func chooseExecutable() {
         let panel=NSOpenPanel();panel.canChooseDirectories=false;panel.canChooseFiles=true;panel.message="Choose your installed Codex executable"
         if panel.runModal() == .OK,let url=panel.url { UserDefaults.standard.set(url.path,forKey:"codexExecutable");store.refresh() }
+    }
+}
+
+// The same approved logo geometry, with a native foreground for both appearances.
+private struct NextResetMark: View {
+    var body: some View {
+        ZStack {
+            Circle().stroke(.primary.opacity(0.15),lineWidth:2)
+            Circle().trim(from:0,to:0.75)
+                .stroke(.primary,style:StrokeStyle(lineWidth:2,lineCap:.round))
+                .rotationEffect(.degrees(-90))
+            VStack(spacing:1) {
+                Circle().fill(Color(red:0.153,green:0.518,blue:0.329))
+                Circle().fill(Color(red:0.839,green:0.608,blue:0.137))
+                Circle().fill(Color(red:0.847,green:0.345,blue:0.290))
+            }.frame(width:3,height:11)
+        }.padding(1)
     }
 }

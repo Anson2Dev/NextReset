@@ -2,15 +2,23 @@
 
 **Put your AI allowance on a calmer schedule.**
 
-**v0.1** · macOS 14+ · MIT License
+**v0.2** · macOS 14+ · MIT License
 
-[Website](https://nextreset.tokenpark.org) · [Download v0.1](https://github.com/Anson2Dev/NextReset/releases/tag/v0.1) · [GitHub](https://github.com/Anson2Dev/NextReset)
+[Website](https://nextreset.tokenpark.org) · [Download v0.2](https://github.com/Anson2Dev/NextReset/releases/tag/v0.2) · [GitHub](https://github.com/Anson2Dev/NextReset)
 
 By **Anson Ho** — [anson.im](https://anson.im) · [anson@bestapp.us](mailto:anson@bestapp.us)
 
 ## Install
 
-Download the Apple silicon ZIP from [Releases](https://github.com/Anson2Dev/NextReset/releases/tag/v0.1), unzip it, and move **NextReset@TokenPark.app** to Applications. Sign in to your Codex CLI before launching. This v0.1 build is ad-hoc signed and **not notarized**. If macOS blocks the app, review the source and release, then use System Settings → Privacy & Security → Open Anyway if you trust it. Intel users can build from source on their Mac.
+Install with Homebrew:
+
+```sh
+brew install --cask Anson2Dev/tap/nextreset
+```
+
+Or download the Apple silicon ZIP from [Releases](https://github.com/Anson2Dev/NextReset/releases/tag/v0.2), unzip it, and move **NextReset@TokenPark.app** to Applications. The v0.2 release is Developer ID signed and notarized by Apple, with the notarization ticket attached. Sign in to your Codex CLI before launching. Intel users can build from source on their Mac.
+
+Update with `brew upgrade --cask nextreset`. If you installed the app manually, move that copy aside before installing through Homebrew.
 
 Open **Settings → About** for version, author, website, email, and GitHub links.
 
@@ -44,23 +52,22 @@ swift test
 open "dist/NextReset@TokenPark.app"
 ```
 
-The script builds for the current Mac architecture and applies a local ad-hoc signature. Developer ID signing and notarization are not configured; these are required steps for a polished public binary release. This repository does not ship or alter Codex itself.
+The script builds for the current Mac architecture and applies a local ad-hoc signature by default. Set `SIGNING_IDENTITY` for Developer ID signing with hardened runtime and a secure timestamp. The separate notarization workflow produces a verified, stapled release archive and matching Homebrew Cask; see [Release instructions](docs/RELEASING.md). The published v0.1 archive remains unnotarized. This repository does not ship or alter Codex itself.
 
 Codex discovery checks a saved executable, `TOKENPARK_CODEX_PATH`, common app/Homebrew/PATH locations, and common fnm/nvm installations. You can select the executable in Settings. No developer-specific executable path is embedded.
 
 ## Reading the menu bar
 
+Settings → Menu bar offers three display modes: **Progress** (the default, ring only), **Progress + number** (remaining percentage), and **Progress + number + bank tickets** (percentage and a compact ticket count). Changes apply immediately and persist across launches. An exclamation mark inside the ring indicates that data needs refreshing. Ticket urgency and pace remain available in the dashboard and menu bar tooltip.
+
 | Symbol | Meaning |
 | --- | --- |
 | Quota ring | Remaining allowance |
-| `↑` | Sampled pace is below the selected plan |
-| `↓` | Sampled pace is above the selected plan |
-| `≈` | Pace is within 10% of the selected plan |
-| Ticket outline | A ticket expires within 24 hours |
+| Ticket outline | Available bank tickets (in the third display mode) |
 | Filled ticket | A planned ticket is ready at the buffer |
 | Circled exclamation | Read failed, cache is stale, or ticket inventory needs refreshing |
 
-Arrows describe **suggested pace**, not historical balance movement. Color is not the only status signal.
+Color is not the only status signal.
 
 ## Daily budget
 
@@ -138,3 +145,15 @@ npm run deploy
 Deployment requires access to the Cloudflare account that owns `tokenpark.org`. The custom domain is declared in `wrangler.jsonc`; Wrangler manages its DNS and TLS setup. See [Cloudflare Workers](https://developers.cloudflare.com/workers/).
 
 The Swift package and local storage retain the internal `TokenPark` identifier for compatibility. All user-facing release branding is NextReset@TokenPark.
+
+### Quota status colors and logo
+
+The menu bar ring contains one status dot: green when observed daily use is below 90% of the selected plan's daily budget, amber from 90% through 110%, and red above 110%. A gray dot means there is not enough valid usage history. Stale data, connection errors, and unconfirmed ticket expiry show an exclamation mark instead. The tooltip and accessibility label also describe headroom in words.
+
+The app icon and logo use a fixed three-quarter ring with green, amber, and red dots stacked vertically. Editable artwork is in `assets/nextreset-logo.svg`; `scripts/generate-icon.swift` generates the PNG and macOS icon sizes. To regenerate the packaged icon:
+
+```sh
+swift scripts/generate-icon.swift assets
+iconutil -c icns assets/AppIcon.iconset -o assets/AppIcon.icns
+./scripts/build-app.sh
+```

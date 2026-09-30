@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2 — 2026-09-30
+
+- Compact menu bar with three persistent display modes; progress-only is the default.
+- Quota headroom dot based on observed pace versus daily budget, with unknown and stale states.
+- New three-color ring app icon, logo, and About artwork.
+- Developer ID signed and Apple-notarized Apple silicon release, with a stapled ticket and Homebrew Cask distribution.
+
 ## v0.1 — 2026-09-30
 
 Initial public release of NextReset@TokenPark.

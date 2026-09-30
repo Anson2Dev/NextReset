@@ -1,4 +1,5 @@
 .build/
+assets/AppIcon.iconset/
 .swiftpm/
 dist/
 .DS_Store

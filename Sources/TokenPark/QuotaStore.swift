@@ -95,6 +95,12 @@ final class QuotaStore: ObservableObject {
     @Published var buffer: Double = UserDefaults.standard.object(forKey:"buffer") as? Double ?? 3
     @Published var notifications = UserDefaults.standard.bool(forKey:"notifications")
     @Published var notificationMessage: String?
+    @Published var menuBarDisplay = MenuBarDisplay(rawValue: UserDefaults.standard.string(forKey:"menuBarDisplay") ?? "") ?? .progress {
+        didSet {
+            UserDefaults.standard.set(menuBarDisplay.rawValue,forKey:"menuBarDisplay")
+            onChange?()
+        }
+    }
     var onChange: (() -> Void)?
     private var tick: Timer?
     private var lastAttempt: Date?
@@ -136,11 +142,9 @@ final class QuotaStore: ObservableObject {
     var expiredUnrefreshed: Bool { credits.contains { ($0.expiry ?? .distantFuture) <= now } }
     var needsCoupon: Bool { !stale && error == nil && usablePlan>0 && (remaining ?? 100)<=buffer }
     var urgent: Bool { firstExpiry.map { $0.timeIntervalSince(now)<86400 } ?? false }
-    var symbol: String {
-        if error != nil || stale || expiredUnrefreshed { return "exclamationmark.circle" }
-        if needsCoupon { return "ticket.fill" }
-        if urgent { return "ticket" }
-        return "circle"
+    var headroom: QuotaHeadroom {
+        guard !stale, error == nil, !expiredUnrefreshed else { return .unknown }
+        return .evaluate(budget:daily,pace:observed)
     }
     var statusMessage: String {
         if let error { return error }
