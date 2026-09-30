@@ -48,10 +48,10 @@ cask "nextreset" do
       verified: "github.com/Anson2Dev/NextReset/"
   name "NextReset@TokenPark"
   desc "Codex quota and reset ticket menu bar utility"
-  homepage "https://nextreset.tokenpark.org"
+  homepage "https://nextreset.tokenpark.org/"
 
   depends_on arch: :arm64
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "NextReset@TokenPark.app"
 
