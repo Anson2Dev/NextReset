@@ -22,10 +22,9 @@ package struct Cache: Codable {
     package init(snapshot:LimitResponse, updated:Date, samples:[Sample]) { self.snapshot=snapshot; self.updated=updated; self.samples=samples }
  package let snapshot: LimitResponse; package let updated: Date; package let samples: [Sample] }
 package struct Plan {
-    package static func daily(left: Double, buffer: Double, coupons: Int, days: Double) -> Double? {
-        guard days.isFinite, days > 0, left.isFinite, buffer.isFinite, (0...100).contains(left), (0...100).contains(buffer), coupons >= 0 else { return nil }
-        let spendable = max(0, left-buffer)
-        let total = coupons == 0 ? spendable : spendable + 100 + Double(coupons-1)*max(0,100-buffer)
+    package static func daily(left: Double, coupons: Int, days: Double) -> Double? {
+        guard days.isFinite, days > 0, left.isFinite, (0...100).contains(left), coupons >= 0 else { return nil }
+        let total = left + Double(coupons)*100
         return total / days
     }
     package static func observed(_ samples: [Sample], now: Date) -> Double? {

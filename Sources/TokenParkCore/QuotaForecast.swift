@@ -22,5 +22,6 @@ package struct QuotaForecast {
             return min(1, total / rate / days)
         }
     }
-    package var runsOutEarly: Bool { endFraction.map { $0 < 1 } ?? false }
+    // Ignore sub-second rounding differences in sampled pace at the ideal finish.
+    package var runsOutEarly: Bool { endFraction.map { (1 - $0) * days * 86400 > 1 } ?? false }
 }

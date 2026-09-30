@@ -16,6 +16,11 @@ final class QuotaForecastTests: XCTestCase {
         XCTAssertEqual(fast.endFraction,0.5)
         XCTAssertTrue(fast.runsOutEarly)
     }
+    func testIdealFinishDoesNotReportFloatingPointNoiseAsEarly() throws {
+        let forecast=try XCTUnwrap(QuotaForecast(total:134,days:3,pace:(134.0/3).nextUp))
+        XCTAssertFalse(forecast.runsOutEarly)
+        XCTAssertTrue(try XCTUnwrap(QuotaForecast(total:134,days:3,pace:45)).runsOutEarly)
+    }
     func testUnknownZeroAndInvalidValues() throws {
         XCTAssertNil(QuotaForecast(total:134,days:0,pace:32))
         XCTAssertNil(QuotaForecast(total:.infinity,days:3,pace:32))

@@ -29,12 +29,12 @@ This is an independent community project, not an OpenAI product. Usage is displa
 ## What you get
 
 - A compact menu bar quota ring with a headroom dot and optional percentage and ticket count.
-- A compact English dashboard with daily budget and sampled usage comparison.
-- Four plans: **No ticket**, **1 ticket**, **2 tickets**, **3 tickets**.
-- An automatically selected **Best** suggestion, with its reasoning in Plan Details.
+- An integrated budget dashboard with a full reset countdown and upward usage forecast.
+- Four plans: **0 tickets**, **1 ticket**, **2 tickets**, **3 tickets**.
+- A **💰** recommendation marker, with its reasoning in Plan Details and optional automatic selection in Settings.
 - Exact expiry times, a collapsed ticket summary, and separate Settings and ticket-detail pages.
 - A 30-minute refresh interval, stale-on-open/wake refresh, and manual refresh.
-- Optional local notifications before expiry and when reaching your redemption buffer.
+- Optional local notifications before expiry and when your quota is used up.
 - No model inference, conversation reading, telemetry, or automatic ticket redemption.
 
 ## Requirements
@@ -64,7 +64,7 @@ Settings → Menu bar offers three display modes: **Progress** (the default, rin
 | --- | --- |
 | Quota ring | Remaining allowance |
 | Ticket outline | Available bank tickets (in the third display mode) |
-| Filled ticket | A planned ticket is ready at the buffer |
+| Filled ticket | A planned ticket is ready after quota is used up |
 | Circled exclamation | Read failed, cache is stale, or ticket inventory needs refreshing |
 
 The menu bar ring contains one status dot: green when observed daily use is below 90% of the selected plan's daily budget, amber from 90% through 110%, and red above 110%. A gray dot means there is not enough valid usage history. Stale data, connection errors, and unconfirmed ticket expiry show an exclamation mark instead. The tooltip and accessibility label also describe headroom in words.
@@ -75,29 +75,29 @@ Color is not the only status signal.
 
 Next Reset stays at the top of the dashboard with a seconds-level countdown and the local reset date. The countdown updates only the display; account reads remain on the 30-minute schedule. When the deadline passes, it shows Awaiting refresh rather than a negative time.
 
-Settings contains Menu bar display, Auto-select Best, Ticket reminders, and About. Advanced contains the buffer, daily capacity, and Locate Codex fallback. Codex is discovered automatically; the manual program picker is only for installations that cannot be found.
+Settings contains Menu bar display, Follow recommended plan, Ticket reminders, and About. Advanced contains daily capacity, and Locate Codex fallback. Codex is discovered automatically; the manual program picker is only for installations that cannot be found.
 
 ## Daily budget
 
 For one ticket:
 
 ```text
-(remaining - buffer + 100) / days until natural reset
+(remaining + 100) / days until natural reset
 ```
 
-Spendable existing balance is clamped to zero. With multiple tickets, each intermediate redemption overwrites the buffer, so each additional ticket contributes `100 - buffer`, not another full 100. The last refill can be spent down before the natural reset.
+All remaining quota is spendable. Each selected ticket contributes another full 100%, so the total budget is `remaining + 100 × tickets`. Plans assume each refill is redeemed after the previous quota is used up; redeeming earlier may discard a remaining balance.
 
-Only the selected plan's tickets are counted. An inventory of three does not automatically mean all three should be spent this cycle. Unavailable tabs are disabled. Selecting a tab turns off automatic selection; turn **Auto-select Best** back on in Settings to follow recommendations.
+Only the selected plan's tickets are counted. An inventory of three does not automatically mean all three should be spent this cycle. Unavailable tabs are disabled. Selecting a tab turns off automatic selection; turn **Follow recommended plan** back on in Settings to follow recommendations.
 
-## What “Best” means
+## What 💰 means
 
-**Best is a transparent planning heuristic, not a global optimization guarantee.** All plans assume redemption does not move the natural reset date; this behavior has not been independently established. Refresh after redemption to use the actual server-returned date.
+**The recommendation is a transparent planning heuristic, not a global optimization guarantee.** All plans assume redemption does not move the natural reset date; this behavior has not been independently established. Refresh after redemption to use the actual server-returned date.
 
 1. If you enter an expected daily capacity, use that; otherwise use sampled pace after at least six hours of observation.
 2. Prefer the **fewest tickets** whose budget covers that expected daily demand and whose earliest-expiring tickets can be redeemed before their deadlines at that pace. Keep a one-hour deadline margin.
 3. If none can cover demand, suggest the largest timely candidate and explain the limitation.
 4. Without enough history, the initial suggestion is explicitly provisional: suggest one ticket if it expires before the following natural cycle and fits the current plan; otherwise preserve tickets.
-5. Unknown inventory or missing exact expiry data does not receive a fabricated Best label.
+5. Unknown inventory or missing exact expiry data does not receive a fabricated recommendation marker.
 
 The four-plan comparison covers the current natural-reset window, not every possible long-term schedule. It does not forecast future gifted tickets or other quota pools. More tickets increase the available budget but may not increase the amount of useful work you can complete.
 
@@ -105,7 +105,7 @@ The four-plan comparison covers the current natural-reset window, not every poss
 
 Recent pace is consumption per valid sampled time, annualized to a 24-hour day. It is **not** an official daily usage ledger. At least 30 minutes of valid samples are required. Account changes, reset changes, ticket-count changes, balance increases, and intervals longer than an hour are excluded. Percentage rounding can make short observations noisy.
 
-Enable reminders in Settings and allow macOS notifications. Known deadlines are scheduled for 24h and 3h beforehand; already-passed notice times are not replayed. The buffer reminder is evaluated when quota is refreshed. Sleep, power-off, notification settings, and Focus modes can affect delivery. The app does not keep your Mac awake.
+Enable reminders in Settings and allow macOS notifications. Known deadlines are scheduled for 24h and 3h beforehand; already-passed notice times are not replayed. The quota exhaustion reminder is evaluated when quota is refreshed. Sleep, power-off, notification settings, and Focus modes can affect delivery. The app does not keep your Mac awake.
 
 ## Privacy
 

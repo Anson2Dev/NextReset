@@ -12,7 +12,7 @@ func renderDashboardPreviews(to directory:String) throws {
     app.setActivationPolicy(.prohibited)
     let cases:[(String,Double?,Double,Double,Int,Bool)] = [
         ("normal",32,37,3,1,false), ("fast",90,37,3,1,false),
-        ("balanced",134/3,37,3,1,false), ("near-balanced",44,37,3,1,false),
+        ("balanced",137/3,37,3,1,false), ("near-balanced",44,37,3,1,false),
         ("very-fast",300,37,3,1,false),
         ("idle",0,37,3,1,false), ("sampling",nil,37,3,1,false),
         ("empty",32,0,3,0,false), ("large",32,37,3,3,false),
@@ -27,7 +27,7 @@ func renderDashboardPreviews(to directory:String) throws {
         """
         store.snapshot=try JSONDecoder().decode(LimitResponse.self,from:Data(json.utf8))
         store.now=now;store.updated=name == "stale" ? now.addingTimeInterval(-4000) : now
-        store.autoBest=name == "normal";store.planCoupons=tickets;store.buffer=3;store.preferredPace=32
+        store.autoBest=name == "normal";store.planCoupons=tickets;store.preferredPace=32
         if let pace {
             store.samples=[
                 Sample(date:now.addingTimeInterval(-1800),used:100-left-pace/48,reset:reset.timeIntervalSince1970,count:3,account:"synthetic"),

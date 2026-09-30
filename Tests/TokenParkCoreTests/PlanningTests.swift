@@ -7,18 +7,23 @@ final class PlanningTests:XCTestCase {
         let json="{\"id\":\"test-\(id)\",\"status\":\"available\",\"expiresAt\":\(now.addingTimeInterval(days*86400).timeIntervalSince1970)}"
         return try! JSONDecoder().decode(Credit.self,from:Data(json.utf8))
     }
-    func testDailyBudgetAndRepeatedBuffer() {
-        XCTAssertEqual(Plan.daily(left:37,buffer:3,coupons:0,days:3)!,34/3.0,accuracy:0.001)
-        XCTAssertEqual(Plan.daily(left:37,buffer:3,coupons:1,days:3)!,134/3.0,accuracy:0.001)
-        XCTAssertEqual(Plan.daily(left:37,buffer:3,coupons:2,days:3)!,231/3.0,accuracy:0.001)
-        XCTAssertEqual(Plan.daily(left:37,buffer:3,coupons:3,days:3)!,328/3.0,accuracy:0.001)
-        XCTAssertNil(Plan.daily(left:37,buffer:3,coupons:1,days:0))
-        XCTAssertNil(Plan.daily(left:37,buffer:3,coupons:-1,days:3))
-        XCTAssertEqual(Plan.daily(left:2,buffer:3,coupons:1,days:1),100)
+    func testDailyBudgetUsesAllRemainingQuotaAndFullTickets() {
+        XCTAssertEqual(Plan.daily(left:37,coupons:0,days:3)!,37/3.0,accuracy:0.001)
+        XCTAssertEqual(Plan.daily(left:37,coupons:1,days:3)!,137/3.0,accuracy:0.001)
+        XCTAssertEqual(Plan.daily(left:37,coupons:2,days:3)!,237/3.0,accuracy:0.001)
+        XCTAssertEqual(Plan.daily(left:37,coupons:3,days:3)!,337/3.0,accuracy:0.001)
+        XCTAssertNil(Plan.daily(left:37,coupons:1,days:0))
+        XCTAssertNil(Plan.daily(left:37,coupons:-1,days:3))
+        XCTAssertEqual(Plan.daily(left:2,coupons:1,days:1),102)
+        XCTAssertEqual(Plan.daily(left:0,coupons:0,days:1),0)
+        XCTAssertEqual(Plan.daily(left:0,coupons:3,days:1),300)
+        XCTAssertEqual(Plan.daily(left:100,coupons:3,days:1),400)
+        XCTAssertNil(Plan.daily(left:-1,coupons:1,days:1))
+        XCTAssertNil(Plan.daily(left:101,coupons:1,days:1))
     }
     func testBestUsesFewestTicketsForExpectedDemand() {
         let cs=[credit(1,4),credit(2,20),credit(3,30)]
-        func best(_ pace:Double?)->Recommendation { Plan.recommend(left:37,buffer:3,reset:now.addingTimeInterval(3*86400),now:now,credits:cs,count:3,pace:pace) }
+        func best(_ pace:Double?)->Recommendation { Plan.recommend(left:37,reset:now.addingTimeInterval(3*86400),now:now,credits:cs,count:3,pace:pace) }
         XCTAssertEqual(best(5).tickets,0)
         XCTAssertEqual(best(20).tickets,1)
         XCTAssertEqual(best(60).tickets,2)
@@ -27,15 +32,15 @@ final class PlanningTests:XCTestCase {
         XCTAssertTrue(best(nil).provisional)
     }
     func testNoFabricatedBestWhenExpiryMissing() {
-        let result=Plan.recommend(left:37,buffer:3,reset:now.addingTimeInterval(3*86400),now:now,credits:[],count:3,pace:20)
+        let result=Plan.recommend(left:37,reset:now.addingTimeInterval(3*86400),now:now,credits:[],count:3,pace:20)
         XCTAssertNil(result.tickets)
     }
     func testTicketCannotBeRecommendedAfterItsDeadline() {
-        let result=Plan.recommend(left:90,buffer:3,reset:now.addingTimeInterval(3*86400),now:now,credits:[credit(1,0.1)],count:1,pace:50)
+        let result=Plan.recommend(left:90,reset:now.addingTimeInterval(3*86400),now:now,credits:[credit(1,0.1)],count:1,pace:50)
         XCTAssertEqual(result.tickets,0)
     }
     func testZeroTicketsStillReturnsNoTicket() {
-        XCTAssertEqual(Plan.recommend(left:37,buffer:3,reset:now.addingTimeInterval(3*86400),now:now,credits:[],count:0,pace:20).tickets,0)
+        XCTAssertEqual(Plan.recommend(left:37,reset:now.addingTimeInterval(3*86400),now:now,credits:[],count:0,pace:20).tickets,0)
     }
     func testSamplingExcludesResetAccountAndLongGaps() {
         let first=Sample(date:now.addingTimeInterval(-1800),used:60,reset:100,count:3,account:"a")

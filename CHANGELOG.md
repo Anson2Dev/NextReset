@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.1 — 2026-10-01
+
+- Integrated total budget, full reset countdown and ticket-plan selection in one dashboard.
+- Added an upward quota forecast with a reset flag, running-person marker and collision-aware labels.
+- Marked the recommended plan with 💰 and removed Auto/Manual and Use Best controls from the dashboard.
+- Removed the buffer setting and deductions: each selected ticket adds a full 100% to the remaining quota.
+- Simplified Settings, Advanced and ticket details, with a compact adaptive settings window.
+- Added forecast edge-case tests and synthetic native UI previews for light/dark and boundary states.
+
 ## Website and documentation — 2026-09-30
 
 - Centered Homebrew installation command with a Copy button and mobile layout.

@@ -45,7 +45,7 @@ struct QuotaForecastChart: View {
             let scale=max(1,forecast.total)
             func point(_ fraction:Double,_ remaining:Double)->CGPoint {
                 CGPoint(x:plot.minX+plot.width*min(1,max(0,fraction)),
-                        y:plot.maxY-plot.height*min(1,max(0,remaining/scale)))
+                        y:plot.minY+plot.height*min(1,max(0,remaining/scale)))
             }
             func line(_ a:CGPoint,_ b:CGPoint,color:Color,width:CGFloat=1,dash:[CGFloat]=[]) {
                 var path=Path();path.move(to:a);path.addLine(to:b)
@@ -76,8 +76,9 @@ struct QuotaForecastChart: View {
             }
             line(.init(x:plot.minX,y:plot.minY),.init(x:plot.minX,y:plot.maxY),color:.secondary.opacity(0.5))
             line(.init(x:plot.minX,y:plot.maxY),.init(x:plot.maxX,y:plot.maxY),color:.secondary.opacity(0.5))
-            text(String(format:"%.0f%%",scale),at:.init(x:plot.minX-7,y:plot.minY),anchor:.trailing)
-            text("0%",at:.init(x:plot.minX-7,y:plot.maxY),anchor:.trailing)
+            // Remaining quota decreases upward: the ideal finish is zero at Reset.
+            text("0%",at:.init(x:plot.minX-7,y:plot.minY),anchor:.trailing)
+            text(String(format:"%.0f%%",scale),at:.init(x:plot.minX-7,y:plot.maxY),anchor:.trailing)
             // The finish pole stays on the exact reset x-coordinate; its flag has a reserved gutter.
             line(.init(x:plot.maxX,y:plot.minY),.init(x:plot.maxX,y:plot.maxY),color:.secondary.opacity(0.7),dash:[2,3])
             text("Reset",at:.init(x:plot.maxX-7,y:plot.minY-16),anchor:.trailing)
@@ -156,7 +157,7 @@ struct QuotaForecastChart: View {
         .accessibilityElement(children:.ignore)
         .accessibilityLabel("Remaining quota forecast")
         .accessibilityValue(accessibilitySummary(forecast))
-        .help("Estimated spendable pool including planned tickets. Ticket redemption is manual; this is not a forecast of the live account balance.")
+        .help("Remaining quota decreases upward toward zero at the reset flag. Estimated spendable pool including planned tickets; redemption is manual.")
     }
 
     private func accessibilitySummary(_ forecast:QuotaForecast)->String {

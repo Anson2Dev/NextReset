@@ -92,7 +92,6 @@ final class QuotaStore: ObservableObject {
     @Published var planCoupons: Int = UserDefaults.standard.object(forKey:"planCoupons") as? Int ?? 1
     @Published var autoBest = UserDefaults.standard.object(forKey:"autoBest") as? Bool ?? true
     @Published var preferredPace = UserDefaults.standard.double(forKey:"preferredPace")
-    @Published var buffer: Double = UserDefaults.standard.object(forKey:"buffer") as? Double ?? 3
     @Published var notifications = UserDefaults.standard.bool(forKey:"notifications")
     @Published var notificationMessage: String?
     @Published var menuBarDisplay = MenuBarDisplay(rawValue: UserDefaults.standard.string(forKey:"menuBarDisplay") ?? "") ?? .progress {
@@ -133,17 +132,17 @@ final class QuotaStore: ObservableObject {
         let recent=samples.filter { now.timeIntervalSince($0.date)<86400 }
         let span=recent.last.flatMap { last in recent.first.map { last.date.timeIntervalSince($0.date) } } ?? 0
         let pace=preferredPace>0 ? preferredPace : span>=21600 ? observed : nil
-        return Plan.recommend(left:remaining,buffer:buffer,reset:reset,now:now,credits:credits,count:count,pace:pace,windowDays:Double(snapshot?.window?.windowDurationMins ?? 10080)/1440)
+        return Plan.recommend(left:remaining,reset:reset,now:now,credits:credits,count:count,pace:pace,windowDays:Double(snapshot?.window?.windowDurationMins ?? 10080)/1440)
     }
     var usablePlan: Int { max(0,min(3,autoBest ? recommendation.tickets ?? 0 : planCoupons,count ?? 0)) }
     func select(_ tickets:Int) { planCoupons=tickets;autoBest=false;settingsChanged() }
     func useBest() { autoBest=true;settingsChanged() }
-    var daily: Double? { guard !stale, error == nil, !expiredUnrefreshed, let remaining, let days else { return nil }; return Plan.daily(left:remaining,buffer:buffer,coupons:usablePlan,days:days) }
+    var daily: Double? { guard !stale, error == nil, !expiredUnrefreshed, let remaining, let days else { return nil }; return Plan.daily(left:remaining,coupons:usablePlan,days:days) }
     func budget(coupons: Int) -> Double? {
         guard !stale, error == nil, !expiredUnrefreshed,
               coupons >= 0, coupons <= (count ?? 0),
               let remaining, let days, days > 0 else { return nil }
-        return Plan.daily(left: remaining, buffer: buffer, coupons: coupons, days: 1)
+        return Plan.daily(left: remaining, coupons: coupons, days: 1)
     }
     var forecast: QuotaForecast? {
         guard let total = budget(coupons: usablePlan), let days else { return nil }
@@ -151,7 +150,7 @@ final class QuotaStore: ObservableObject {
     }
     var observed: Double? { guard !stale,error == nil else { return nil }; return Plan.observed(samples,now:now) }
     var expiredUnrefreshed: Bool { credits.contains { ($0.expiry ?? .distantFuture) <= now } }
-    var needsCoupon: Bool { !stale && error == nil && usablePlan>0 && (remaining ?? 100)<=buffer }
+    var needsCoupon: Bool { !stale && error == nil && usablePlan>0 && (remaining ?? 100)<=0 }
     var urgent: Bool { firstExpiry.map { $0.timeIntervalSince(now)<86400 } ?? false }
     var headroom: QuotaHeadroom {
         guard !stale, error == nil, !expiredUnrefreshed else { return .unknown }
@@ -173,8 +172,8 @@ final class QuotaStore: ObservableObject {
     }
     var deadlineWarning: String? {
         guard let expiry=firstExpiry,usablePlan>0,let daily, daily>0,let remaining else { return nil }
-        let predicted=now.addingTimeInterval(max(0,remaining-buffer)/daily*86400)
-        return predicted >= expiry ? "This ticket may expire before you reach the buffer. Redeem earlier or adjust your plan." : nil
+        let predicted=now.addingTimeInterval(remaining/daily*86400)
+        return predicted >= expiry ? "This ticket may expire before you use up your current quota. Redeem earlier or adjust your plan." : nil
     }
     func refreshIfNeeded() {
         now=Date()
@@ -209,14 +208,14 @@ final class QuotaStore: ObservableObject {
         }
     }
     func settingsChanged() {
-        UserDefaults.standard.set(autoBest,forKey:"autoBest"); UserDefaults.standard.set(preferredPace,forKey:"preferredPace"); UserDefaults.standard.set(planCoupons,forKey:"planCoupons"); UserDefaults.standard.set(buffer,forKey:"buffer")
+        UserDefaults.standard.set(autoBest,forKey:"autoBest"); UserDefaults.standard.set(preferredPace,forKey:"preferredPace"); UserDefaults.standard.set(planCoupons,forKey:"planCoupons")
         scheduleNotifications(); onChange?()
     }
     func enableNotifications() {
         UNUserNotificationCenter.current().requestAuthorization(options:[.alert,.sound]) { ok,_ in
             DispatchQueue.main.async {
                 self.notifications=ok; UserDefaults.standard.set(ok,forKey:"notifications")
-                self.notificationMessage=ok ? "Expiry and buffer reminders are enabled." : "Notifications are not allowed. Enable them in System Settings."
+                self.notificationMessage=ok ? "Expiry and quota exhaustion reminders are enabled." : "Notifications are not allowed. Enable them in System Settings."
                 self.scheduleNotifications()
             }
         }
@@ -244,8 +243,8 @@ final class QuotaStore: ObservableObject {
             let key="\(reset)-\(count ?? 0)"
             if thresholdKey != key {
                 thresholdKey=key; UserDefaults.standard.set(key,forKey:"lastThresholdNotice")
-                let content=UNMutableNotificationContent();content.title="You have reached the ticket buffer";content.body="\(Int(remaining ?? 0))% remaining. You can redeem a planned reset ticket.";content.sound = .default
-                center.add(UNNotificationRequest(identifier:"buffer-\(key)",content:content,trigger:nil))
+                let content=UNMutableNotificationContent();content.title="Your quota is used up";content.body="\(Int(remaining ?? 0))% remaining. You can redeem a planned reset ticket.";content.sound = .default
+                center.add(UNNotificationRequest(identifier:"exhausted-\(key)",content:content,trigger:nil))
             }
         }
     }

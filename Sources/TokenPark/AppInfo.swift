@@ -8,7 +8,7 @@ enum AppInfo {
         return image
     }()
     static let name = "NextReset@TokenPark"
-    static let version = "0.2"
+    static let version = "0.2.1"
     static let website = URL(string: "https://nextreset.tokenpark.org")!
     static let github = URL(string: "https://github.com/Anson2Dev/NextReset")!
     static let authorWebsite = URL(string: "https://anson.im")!

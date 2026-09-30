@@ -3,17 +3,17 @@
 NextReset@TokenPark's main panel combines budget and forecast in one surface:
 
 1. **Budget until reset** — total spendable quota in the selected plan, beside a live days/hours/minutes/seconds countdown. The exact reset date and time zone sit below the countdown.
-2. **Tickets to use** — 0 / 1 / 2 / 3 ticket choices each show their total spendable quota. Unavailable counts are disabled. Auto or Manual names the selection mode; Use Best restores automatic selection. Provisional recommendations are marked Estimate.
-3. **Remaining quota** — the selected pool is forecast from Now to Reset. A green line shows sampled current pace, a gray dashed line shows ideal pace, and a checkered flag marks the fixed reset deadline. A running-person symbol follows the observed line's endpoint, without a “You” label. Consumption stops at zero when the pool would run out early. Missing pace shows only the ideal line; stale/error states hide the forecast.
-4. **Reset Tickets** — available count, **Next expiry**, and the buffer reminder. Expiry does not mean quota reset.
+2. **Tickets to use** — 0 / 1 / 2 / 3 ticket choices each show their total spendable quota. Unavailable counts are disabled. 💰 appears before the recommended option’s ticket label, independently of selection. The main panel has no Auto/Manual menu, Use Best button, or separate recommendation row. Hover help and accessibility hints identify provisional recommendations. Follow recommended plan remains available in Settings.
+3. **Remaining quota** — the selected pool is forecast from Now to Reset. Both lines rise toward the finish: the remaining-quota axis has the starting budget at the bottom and 0% at the top. A green line shows sampled current pace, a gray dashed line reaches 0% exactly at Reset, and a checkered flag marks that top-right intersection. A running-person symbol follows the observed line's endpoint, without a “You” label. Consumption stops at zero when the pool would run out early. Missing pace shows only the ideal line; stale/error states hide the forecast.
+4. **Reset Tickets** — available count and **Next expiry**, without an explanatory line below. Expiry does not mean quota reset.
 
-Each forecast is a planning pool including future manual ticket redemptions, not a simulation of the live balance jumping at redemption. Budget calculations retain the existing buffer rule: with 37% remaining and a 3% buffer, the totals are 34%, 134%, 231%, and 328%. The zero-ticket plan retains its buffer too.
+Each forecast is a planning pool including future manual ticket redemptions, not a simulation of the live balance jumping at redemption. Budget calculations use all remaining quota and add 100% per selected ticket: with 37% remaining, totals are 37%, 137%, 237%, and 337%. There is no buffer setting or deduction; legacy saved buffer preferences are no longer read.
 
 The chart uses one Canvas coordinate system with fixed plot insets. Flag, runner, endpoints, axes, and labels cannot resize the plot. Endpoint annotations and runner positions avoid both curves and each other. The popover is 440 points wide, up to 680 points tall; shorter screens scroll the content while retaining header/footer. Light and dark appearances use semantic foreground colors.
 
 Plan Details contains recommendation reasoning, measurement definitions, manual-selection behavior, and the assumption that ticket redemption leaves the planning reset unchanged. This assumption still requires confirmation; the interface does not make the strategy a guarantee.
 
-Settings contains Menu bar display, Auto-select Best, Ticket reminders, and About (version, MIT license, author, website, email, and GitHub). Advanced contains the buffer, daily capacity, and Locate Codex fallback.
+Settings contains Menu bar display, Follow recommended plan, Ticket reminders, and About (version, MIT license, author, website, email, and GitHub). Advanced contains daily capacity, and Locate Codex fallback. Settings uses compact control rows without explanatory paragraphs; the zero-capacity convention is available as hover help and notification permission status remains visible.
 
 Percentages always denote quota; `% / day` denotes usage pace. The dashboard does not use a percentage progress bar for pace attainment. The contextual suggestion compares current and ideal pace in % / day.
 

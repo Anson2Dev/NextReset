@@ -48,7 +48,7 @@ struct Dashboard: View {
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }.buttonStyle(.plain).font(.system(size:11)).foregroundStyle(.secondary)
             }.padding(.horizontal,20).padding(.vertical,12)
-        }.frame(width:440,height:height).background(Palette.surface).tint(Palette.green).environment(\.locale,Locale(identifier:"en_US"))
+        }.frame(width:440,height:page == "settings" ? min(height,advancedExpanded ? 520 : 440) : height).background(Palette.surface).tint(Palette.green).environment(\.locale,Locale(identifier:"en_US"))
     }
     private var resetCountdown:some View {
         TimelineView(.periodic(from:.now,by:1)) { context in
@@ -98,7 +98,6 @@ struct Dashboard: View {
                     Image(systemName:"chevron.right").font(.system(size:10)).foregroundStyle(.secondary)
                 }.frame(minHeight:28).contentShape(Rectangle())
             }.buttonStyle(.plain).help(store.firstExpiry.map(QuotaStore.dateText) ?? "No expiry time available")
-            Text(store.count == nil ? "Refresh to load ticket details." : store.usablePlan > 0 ? "Use near \(Int(store.buffer))% remaining, before expiry." : "No tickets included in this plan.").font(.system(size:11)).foregroundStyle(.secondary)
             if let warning=store.deadlineWarning { Label(warning,systemImage:"exclamationmark.triangle").font(.caption2).foregroundStyle(.orange).fixedSize(horizontal:false,vertical:true) }
         }
     }
@@ -122,26 +121,18 @@ struct Dashboard: View {
                 resetCountdown
             }.padding(.bottom,3)
             VStack(alignment:.leading,spacing:8) {
-                HStack {
-                    Text("Tickets to use").font(.system(size:12,weight:.semibold))
-                    Spacer()
-                    Menu {
-                        Button("Auto-select Best") { store.useBest() }
-                        if store.autoBest {
-                            Button("Keep this plan manually") { store.select(store.usablePlan) }
-                        }
-                    } label: {
-                        Text(store.autoBest ? (store.recommendation.provisional ? "Auto · Estimate" : "Auto") : "Manual")
-                            .font(.system(size:11)).foregroundStyle(.secondary)
-                    }.menuStyle(.borderlessButton).fixedSize()
-                }
+                Text("Tickets to use").font(.system(size:12,weight:.semibold))
                 HStack(spacing:0) {
                     ForEach(0...3,id:\.self) { n in
                         let selected=store.usablePlan==n
                         let available=n <= (store.count ?? 0)
+                        let recommended=store.recommendation.tickets == n
                         Button { store.select(n) } label: {
                             VStack(spacing:4) {
-                                Text(n==1 ? "1 ticket" : "\(n) tickets")
+                                HStack(spacing:3) {
+                                    if recommended { Text("💰").font(.system(size:11)).accessibilityHidden(true) }
+                                    Text(n==1 ? "1 ticket" : "\(n) tickets")
+                                }
                                 Text(store.budget(coupons:n).map { String(format:"%.0f%%",$0) } ?? "—")
                                     .monospacedDigit()
                             }.font(.system(size:12,weight:selected ? .semibold : .regular))
@@ -151,20 +142,14 @@ struct Dashboard: View {
                                 .contentShape(Rectangle())
                         }.buttonStyle(.plain).disabled(!available).opacity(available ? 1 : 0.35)
                             .accessibilityLabel("\(n) tickets, " + (store.budget(coupons:n).map { String(format:"%.0f percent available",$0) } ?? "unavailable"))
+                            .accessibilityHint(recommended ? (store.recommendation.provisional ? "Estimated recommendation" : "Recommended plan") : "Select this ticket plan")
+                            .help(recommended ? (store.recommendation.provisional ? "Estimated recommendation. " : "Recommended plan. ")+store.recommendation.reason : "Select this ticket plan")
                             .accessibilityAddTraits(selected ? .isSelected : [])
                     }
                 }.background(.primary.opacity(0.025))
                     .clipShape(RoundedRectangle(cornerRadius:8))
                     .overlay(RoundedRectangle(cornerRadius:8).stroke(.primary.opacity(0.12),lineWidth:1))
-                HStack {
-                    Text(store.recommendation.tickets.map { "\(store.recommendation.provisional ? "Estimated" : "Recommended"): \($0) \($0 == 1 ? "ticket" : "tickets")" } ?? "Recommendation unavailable")
-                        .font(.system(size:11)).foregroundStyle(.secondary)
-                    Spacer()
-                    if !store.autoBest {
-                        Button("Use Best") { store.useBest() }.buttonStyle(.plain).font(.system(size:11)).foregroundStyle(Palette.green)
-                            .disabled(store.recommendation.tickets == nil)
-                    }
-                }
+
             }
         }
     }
@@ -186,10 +171,10 @@ struct Dashboard: View {
         VStack(alignment:.leading,spacing:18) {
             VStack(alignment:.leading,spacing:6) {
                 Text("Budget until reset").font(.headline)
-                Text("Total spendable quota until Next Reset, including the selected tickets and excluding the planning buffer. 100% is one full quota. The forecast treats planned refills as one spendable pool; it is not your live account balance. Ideal pace spreads that pool evenly until reset.")
+                Text("Total spendable quota until Next Reset, including the selected tickets. Each ticket adds one full quota. 100% is one full quota. The forecast treats planned refills as one spendable pool; it is not your live account balance. Ideal pace spreads that pool evenly until reset.")
             }
             VStack(alignment:.leading,spacing:6) {
-                Text("Why Best?").font(.headline)
+                Text("Recommended plan").font(.headline)
                 Text(store.recommendation.reason)
                 if store.recommendation.provisional {
                     Text("Estimated from ticket timing while usage history builds.").foregroundStyle(.secondary)
@@ -201,7 +186,7 @@ struct Dashboard: View {
             }
             VStack(alignment:.leading,spacing:6) {
                 Text("Plan selection").font(.headline)
-                Text("Selecting a ticket count switches to a manual plan. Use Best restores automatic selection. Changing plans never redeems a ticket.")
+                Text("💰 marks the recommended ticket count. Select any count to keep that plan. To follow changing recommendations, enable Follow recommended plan in Settings. Changing plans never redeems a ticket.")
             }
             Divider()
             Text("Plans assume using a ticket does not change Next Reset. Refresh after redeeming to use the account's updated reset time.")
@@ -209,76 +194,64 @@ struct Dashboard: View {
         }.font(.system(size:13)).fixedSize(horizontal:false,vertical:true)
     }
     private var settingsPanel:some View {
-        VStack(alignment:.leading,spacing:20) {
-            VStack(alignment:.leading,spacing:6) {
-                Picker("Menu bar",selection:$store.menuBarDisplay) {
-                    ForEach(MenuBarDisplay.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
+        VStack(alignment:.leading,spacing:14) {
+            Picker("Menu bar",selection:$store.menuBarDisplay) {
+                ForEach(MenuBarDisplay.allCases) { mode in
+                    Text(mode.title).tag(mode)
                 }
-                .pickerStyle(.menu)
-                Text("The ring shows remaining quota. The center dot shows headroom: green for comfortable, amber for balanced, red for tight; gray means more usage history is needed.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            Divider()
-            VStack(alignment:.leading,spacing:6) {
-                Toggle("Auto-select Best",isOn:$store.autoBest)
-                    .onChange(of:store.autoBest) { _,_ in store.settingsChanged() }
-                Text("Keep the recommended ticket plan selected.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            VStack(alignment:.leading,spacing:6) {
-                Toggle("Ticket reminders",isOn:Binding(
-                    get:{ store.notifications },
-                    set:{ enabled in enabled ? store.enableNotifications() : store.disableNotifications() }
-                ))
-                Text("24h and 3h before expiry, and when you reach your buffer.")
-                    .font(.caption).foregroundStyle(.secondary)
-                if let message=store.notificationMessage {
-                    Text(message).font(.caption).foregroundStyle(.secondary)
-                }
+            }.pickerStyle(.menu)
+            Toggle("Follow recommended plan",isOn:$store.autoBest)
+                .onChange(of:store.autoBest) { _,_ in store.settingsChanged() }
+            Toggle("Ticket reminders",isOn:Binding(
+                get:{ store.notifications },
+                set:{ enabled in enabled ? store.enableNotifications() : store.disableNotifications() }
+            ))
+            if let message=store.notificationMessage {
+                Text(message).font(.caption).foregroundStyle(.secondary)
             }
             Divider()
             DisclosureGroup("Advanced",isExpanded:$advancedExpanded) {
-                VStack(alignment:.leading,spacing:16) {
-                    Stepper("Keep a buffer: \(Int(store.buffer))%",value:$store.buffer,in:0...20,step:1)
-                        .onChange(of:store.buffer) { _,_ in store.settingsChanged() }
-                    VStack(alignment:.leading,spacing:6) {
+                VStack(alignment:.leading,spacing:12) {
+                    HStack {
                         Text("Daily capacity (% / day)")
+                        Spacer()
                         TextField("0 = automatic",value:$store.preferredPace,format:.number)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.roundedBorder).frame(width:100)
                             .accessibilityLabel("Daily capacity, percent per day")
+                            .help("0 = automatic")
                             .onChange(of:store.preferredPace) { _,_ in
                                 store.preferredPace=max(0,min(1000,store.preferredPace));store.settingsChanged()
                             }
-                        Text("Percent of a full quota. Use 0 to estimate from your history after 6 hours.")
-                            .font(.caption).foregroundStyle(.secondary)
                     }
-                    Divider()
-                    VStack(alignment:.leading,spacing:6) {
-                        Text("Codex connection").fontWeight(.medium)
-                        Text("Detected automatically. Choose a program only if NextReset cannot find Codex.")
-                            .font(.caption).foregroundStyle(.secondary)
+                    HStack {
+                        Text("Codex connection")
+                        Spacer()
                         Button("Locate Codex…") { chooseExecutable() }
                     }
-                    Text("Best is an estimate. Plans assume using a ticket does not change the next reset. Refresh after redeeming.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }.padding(.top,12)
+                }.padding(.top,10)
             }
-            Text("Refreshes every 30 minutes. Tickets are never redeemed automatically.")
-                .font(.caption).foregroundStyle(.secondary)
             Divider()
             VStack(alignment:.leading,spacing:10) {
                 Text("About").font(.headline)
-                Image(nsImage:AppInfo.icon)
-                    .resizable().frame(width:48,height:48).accessibilityHidden(true)
-                Text(AppInfo.name).fontWeight(.semibold)
-                Text("v\(AppInfo.version) · MIT License").foregroundStyle(.secondary)
-                Text("Author: Anson Ho")
-                Link("anson.im",destination:AppInfo.authorWebsite)
-                Link("anson@bestapp.us",destination:AppInfo.authorEmail)
-                Link("GitHub · Anson2Dev/NextReset",destination:AppInfo.github)
-                Link("Official website",destination:AppInfo.website)
+                HStack(spacing:10) {
+                    Image(nsImage:AppInfo.icon)
+                        .resizable().frame(width:40,height:40).accessibilityHidden(true)
+                    VStack(alignment:.leading,spacing:3) {
+                        Text(AppInfo.name).fontWeight(.semibold)
+                        Text("v\(AppInfo.version) · MIT License").foregroundStyle(.secondary)
+                    }
+                }
+                Text("Anson Ho").foregroundStyle(.secondary)
+                HStack {
+                    Link("anson.im",destination:AppInfo.authorWebsite)
+                    Spacer()
+                    Link("anson@bestapp.us",destination:AppInfo.authorEmail)
+                }
+                HStack {
+                    Link("GitHub",destination:AppInfo.github)
+                    Spacer()
+                    Link("Official website",destination:AppInfo.website)
+                }
             }.textSelection(.enabled)
         }.font(.system(size:13)).toggleStyle(.switch)
     }
