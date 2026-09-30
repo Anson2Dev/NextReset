@@ -2,9 +2,9 @@
 
 **Put your AI allowance on a calmer schedule.**
 
-**v0.2** · macOS 14+ · MIT License
+**v0.2.1** · macOS 14+ · MIT License
 
-[Website](https://nextreset.tokenpark.org) · [Download v0.2](https://github.com/Anson2Dev/NextReset/releases/tag/v0.2) · [GitHub](https://github.com/Anson2Dev/NextReset)
+[Website](https://nextreset.tokenpark.org) · [Download v0.2.1](https://github.com/Anson2Dev/NextReset/releases/tag/v0.2.1) · [GitHub](https://github.com/Anson2Dev/NextReset)
 
 By **Anson Ho** — [anson.im](https://anson.im) · [anson@bestapp.us](mailto:anson@bestapp.us)
 
@@ -16,7 +16,7 @@ Install with Homebrew:
 brew install --cask Anson2Dev/tap/nextreset
 ```
 
-Or download the Apple silicon ZIP from [Releases](https://github.com/Anson2Dev/NextReset/releases/tag/v0.2), unzip it, and move **NextReset@TokenPark.app** to Applications. The v0.2 release is Developer ID signed and notarized by Apple, with the notarization ticket attached. Sign in to your Codex CLI before launching. Intel users can build from source on their Mac.
+Or download the Apple silicon ZIP from [Releases](https://github.com/Anson2Dev/NextReset/releases/tag/v0.2.1), unzip it, and move **NextReset@TokenPark.app** to Applications. The v0.2.1 release is Developer ID signed and notarized by Apple, with the notarization ticket attached. Sign in to your Codex CLI before launching. Intel users can build from source on their Mac.
 
 Update with `brew upgrade --cask nextreset`. If you installed the app manually, move that copy aside before installing through Homebrew.
 
@@ -149,7 +149,7 @@ The Swift package and local storage retain the internal `TokenPark` identifier f
 
 ## Documentation
 
-See [Documentation index](docs/README.md) for interface decisions, icon regeneration, signing and releases, website deployment, and the verified v0.2 release record.
+See [Documentation index](docs/README.md) for interface decisions, icon regeneration, signing and releases, website deployment, and the verified v0.2.1 release record.
 
 ## License
 
