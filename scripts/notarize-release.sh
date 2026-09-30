@@ -44,8 +44,7 @@ cask "nextreset" do
   version "$VERSION"
   sha256 "$SHA"
 
-  url "https://github.com/Anson2Dev/NextReset/releases/download/v#{version}/NextReset-v#{version}-macOS-arm64.zip",
-      verified: "github.com/Anson2Dev/NextReset/"
+  url "https://github.com/Anson2Dev/NextReset/releases/download/v#{version}/NextReset-v#{version}-macOS-arm64.zip"
   name "NextReset@TokenPark"
   desc "Codex quota and reset ticket menu bar utility"
   homepage "https://nextreset.tokenpark.org/"
