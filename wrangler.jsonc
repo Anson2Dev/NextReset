@@ -16,6 +16,7 @@
     {
       "type": "Text",
       "globs": [
+        "**/copy.js",
         "**/*.html",
         "**/*.css",
         "**/*.txt",

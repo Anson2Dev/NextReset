@@ -133,7 +133,7 @@ Settings shows Auto-select Best and Expiry reminders. Advanced contains the buff
 
 ## Website deployment
 
-The official site is served by Cloudflare Workers at **https://nextreset.tokenpark.org**. The HTML and CSS are static, with no browser JavaScript. A small Worker serves bundled text assets with caching, security headers, and a 404 page. Wrangler bundles the files during deployment.
+The official site is served by Cloudflare Workers at **https://nextreset.tokenpark.org**. The HTML and CSS are static, with a small local script for copying the Homebrew installation command. A small Worker serves bundled text assets with caching, security headers, and a 404 page. Wrangler bundles the files during deployment.
 
 ```sh
 npm ci

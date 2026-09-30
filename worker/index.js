@@ -1,6 +1,7 @@
 import home from '../website/index.html';
 import notFound from '../website/404.html';
 import css from '../website/style.css';
+import copyScript from '../website/copy.js';
 import robots from '../website/robots.txt';
 import sitemap from '../website/sitemap.xml';
 
@@ -8,6 +9,7 @@ import sitemap from '../website/sitemap.xml';
 const pages = new Map([
   ['/', [home, 'text/html']],
   ['/style.css', [css, 'text/css']],
+  ['/copy.js', [copyScript, 'text/javascript']],
   ['/robots.txt', [robots, 'text/plain']],
   ['/sitemap.xml', [sitemap, 'application/xml']],
 ]);
