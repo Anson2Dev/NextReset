@@ -1,3 +1,4 @@
+import productScreenshot from '../website/product-2026-10-01.png';
 import home from '../website/index.html';
 import notFound from '../website/404.html';
 import css from '../website/style.css';
@@ -5,8 +6,9 @@ import copyScript from '../website/copy.js';
 import robots from '../website/robots.txt';
 import sitemap from '../website/sitemap.xml';
 
-// The site is static. Bundling these small text files also supports direct API deployments.
+// Bundle the static website and its product screenshot.
 const pages = new Map([
+  ['/product-2026-10-01.png', [productScreenshot, 'image/png']],
   ['/', [home, 'text/html']],
   ['/style.css', [css, 'text/css']],
   ['/copy.js', [copyScript, 'text/javascript']],
@@ -33,7 +35,7 @@ export default {
     const [body, type] = page ?? [notFound, 'text/html'];
     return new Response(request.method === 'HEAD' ? null : body, {
       status: page ? 200 : 404,
-      headers: {...headers, 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'public, max-age=300'},
+      headers: {...headers, 'Content-Type': type.startsWith('image/') ? type : `${type}; charset=utf-8`, 'Cache-Control': 'public, max-age=300'},
     });
   },
 };

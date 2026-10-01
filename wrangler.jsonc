@@ -23,6 +23,13 @@
         "**/*.xml"
       ],
       "fallthrough": true
+    },
+    {
+      "type": "Data",
+      "globs": [
+        "**/*.png"
+      ],
+      "fallthrough": true
     }
   ],
   "observability": {
